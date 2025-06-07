@@ -6,6 +6,8 @@
 #include <map>
 #include <string>
 #include <algorithm>
+#include <limits>
+#include <iostream>
 
 namespace Tsukiyo {
 
@@ -90,6 +92,33 @@ public:
 
             if (!currentTag.empty()) {
                 processTag(currentTag, currentData.str());
+            }
+
+            if (!diffData.empty()) {
+                std::vector<std::string> preferredDiffs = {"Hard", "Normal", "Easy"};
+                const StepManiaDiffData* selectedDiff = nullptr;
+
+                for (const auto& diff : preferredDiffs) {
+                    auto it = diffData.find(diff);
+                    if (it != diffData.end()) {
+                        selectedDiff = &it->second;
+                        difficulty = diff == "Hard" ? Difficulty::Hard :
+                                   diff == "Normal" ? Difficulty::Normal :
+                                   diff == "Easy" ? Difficulty::Easy :
+                                   Difficulty::Custom;
+                        break;
+                    }
+                }
+
+                if (!selectedDiff && !diffData.empty()) {
+                    selectedDiff = &diffData.begin()->second;
+                    difficulty = Difficulty::Custom;
+                    customDifficulty = diffData.begin()->first;
+                }
+
+                if (selectedDiff) {
+                    convertNotesToSections(*selectedDiff);
+                }
             }
 
             return true;
@@ -223,10 +252,10 @@ private:
         std::stringstream ss(data);
         std::string line;
         std::vector<std::string> noteData;
-        
+
         while (std::getline(ss, line)) {
             line = trim(line);
-            if (!line.empty() && line != ",") {
+            if (!line.empty()) {
                 noteData.push_back(line);
             }
         }
@@ -255,20 +284,126 @@ private:
         diffInfo.radar = radar;
 
         std::vector<std::string> currentMeasure;
+        int measureCount = 0;
+        
         for (size_t i = 5; i < noteData.size(); ++i) {
             std::string step = trim(noteData[i]);
-            if (step == ",") {
+            
+            if (step == "," || step == ";") {
                 if (!currentMeasure.empty()) {
                     diffInfo.notes.push_back(currentMeasure);
                     currentMeasure.clear();
+                    measureCount++;
                 }
-            } else if (!step.empty()) {
+            } 
+            else if (!step.empty()) {
                 currentMeasure.push_back(step);
             }
         }
 
+        if (!currentMeasure.empty()) {
+            diffInfo.notes.push_back(currentMeasure);
+            measureCount++;
+        }
+
         diffData[diff] = diffInfo;
         keyCount = static_cast<int>(diffInfo.dance);
+    }
+
+    void convertNotesToSections(const StepManiaDiffData& diffInfo) {
+        sections.clear();
+        if (diffInfo.notes.empty()) return;
+
+        float currentBPM = bpm;
+        float beatsPerMeasure = 4.0f;
+        float msPerBeat = 60000.0f / currentBPM;
+        float measureLengthMs = msPerBeat * beatsPerMeasure;
+
+        int totalNotes = 0;
+        float currentTime = 0.0f;
+
+        for (size_t measureIndex = 0; measureIndex < diffInfo.notes.size(); measureIndex++) {
+            const auto& measure = diffInfo.notes[measureIndex];
+            if (measure.empty()) {
+                currentTime += measureLengthMs;
+                continue;
+            }
+
+            Section section;
+            section.bpm = currentBPM;
+            section.lengthInSteps = 16;
+            section.changeBPM = false;
+
+            float measureStartBeat = measureIndex * beatsPerMeasure;
+            for (const auto& bpmChange : bpmChanges) {
+                if (bpmChange.beat >= measureStartBeat && bpmChange.beat < measureStartBeat + beatsPerMeasure) {
+                    section.bpm = bpmChange.bpm;
+                    section.changeBPM = true;
+                    currentBPM = bpmChange.bpm;
+                    msPerBeat = 60000.0f / currentBPM;
+                    measureLengthMs = msPerBeat * beatsPerMeasure;
+                    break;
+                }
+            }
+
+            float stepTimeIncrement = measureLengthMs / measure.size();
+            std::vector<float> holdStartTimes(keyCount, -1.0f);
+
+            for (size_t stepIndex = 0; stepIndex < measure.size(); stepIndex++) {
+                const std::string& step = measure[stepIndex];
+                float stepTime = currentTime + (stepIndex * stepTimeIncrement);
+
+                for (size_t lane = 0; lane < std::clamp(step.length(), size_t{0}, static_cast<size_t>(keyCount)); lane++) {
+                    char noteType = step[lane];
+
+                    switch (static_cast<StepManiaNote>(noteType)) {
+                        case StepManiaNote::NOTE:
+                            section.notes.emplace_back(stepTime, lane, 0.0f);
+                            totalNotes++;
+                            break;
+
+                        case StepManiaNote::HOLD_HEAD:
+                            holdStartTimes[lane] = stepTime;
+                            break;
+
+                        case StepManiaNote::HOLD_TAIL:
+                            if (holdStartTimes[lane] >= 0.0f) {
+                                float duration = stepTime - holdStartTimes[lane];
+                                section.notes.emplace_back(holdStartTimes[lane], lane, duration);
+                                holdStartTimes[lane] = -1.0f;
+                                totalNotes++;
+                            }
+                            break;
+
+                        case StepManiaNote::ROLL_HEAD:
+                            holdStartTimes[lane] = stepTime;
+                            break;
+
+                        default:
+                            break;
+                    }
+                }
+            }
+
+            for (size_t lane = 0; lane < holdStartTimes.size(); lane++) {
+                if (holdStartTimes[lane] >= 0.0f) {
+                    float duration = currentTime + measureLengthMs - holdStartTimes[lane];
+                    section.notes.emplace_back(holdStartTimes[lane], lane, duration);
+                    totalNotes++;
+                }
+            }
+
+            if (!section.notes.empty()) {
+                sections.push_back(std::move(section));
+            }
+
+            currentTime += measureLengthMs;
+        }
+
+        for (auto& section : sections) {
+            std::sort(section.notes.begin(), section.notes.end(),
+                     [](const Note& a, const Note& b) { return a.time < b.time; });
+        }
     }
 
     static std::string trim(std::string str) {
