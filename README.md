@@ -11,16 +11,6 @@
 | [Osu! Mania](https://osu.ppy.sh/)                                     | osu |
 | [StepMania](https://www.stepmania.com/)                               | sm |
 
-## features
-
-* Load and save charts in multiple formats
-* Convert between different chart formats
-* Automatic handling of:
-  * Key count conversion (e.g., 7K to 4K)
-  * Scroll speed normalization
-  * Note timing and position mapping
-  * BPM changes and sections
-
 ## Credits
 
 * maybekoi/koshii(me!) - Tsukiyo
