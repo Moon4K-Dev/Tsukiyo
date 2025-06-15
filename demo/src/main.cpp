@@ -21,6 +21,27 @@ void printChartInfo(const std::unique_ptr<Tsukiyo::Chart>& chart) {
             }
             std::cout << "\n";
         }
+    } else if (chart->format == Tsukiyo::Chart::Format::RhythmButtonsCustom) {
+        auto rbCustom = dynamic_cast<const Tsukiyo::RhythmButtonsChartCustom*>(chart.get());
+        if (rbCustom) {
+            const auto& difficultyNames = rbCustom->getDifficultyNames();
+            
+            std::cout << "Available Difficulties: ";
+            for (size_t i = 0; i < difficultyNames.size(); ++i) {
+                if (i > 0) std::cout << ", ";
+                std::cout << difficultyNames[i];
+            }
+            std::cout << "\n";
+            
+            std::cout << "Difficulty Details:\n";
+            for (size_t i = 0; i < chart->sections.size() && i < difficultyNames.size(); ++i) {
+                if (!chart->sections[i].notes.empty()) {
+                    std::cout << "  " << difficultyNames[i] << ": " << chart->sections[i].notes.size() << " notes\n";
+                }
+            }
+        } else {
+            std::cout << "Error: Could not cast to RhythmButtonsChartCustom\n";
+        }
     } else {
         std::cout << "Difficulty: " << chart->difficulty;
         if (chart->difficulty == Tsukiyo::Chart::Difficulty::Custom) {
@@ -87,6 +108,23 @@ bool isRhythmButtonsChart(const std::string& chartPath) {
     }
 }
 
+bool isRhythmButtonsCustomChart(const std::string& chartPath) {
+    try {
+        std::ifstream chartFile(chartPath);
+        if (!chartFile.is_open()) return false;
+        
+        nlohmann::json chartJson = nlohmann::json::parse(chartFile);
+        
+        return chartJson.contains("song") && 
+               chartJson.contains("charts") &&
+               chartJson["song"].is_object() &&
+               chartJson["charts"].is_object();
+    }
+    catch (const std::exception&) {
+        return false;
+    }
+}
+
 int main(int argc, char* argv[])
 {
     if (argc < 2) {
@@ -122,12 +160,14 @@ int main(int argc, char* argv[])
         } else {
             format = Tsukiyo::Chart::Format::FNFLegacy;
         }
+    } else if (ext == ".rbchart") {
+        format = Tsukiyo::Chart::Format::RhythmButtonsCustom;
     } else if (ext == ".osu") {
         format = Tsukiyo::Chart::Format::OsuMania;
     } else if (ext == ".sm") {
         format = Tsukiyo::Chart::Format::StepMania;
     } else {
-        std::cout << "Unsupported file format. Please use .moon, .json, .osu, or .sm files.\n";
+        std::cout << "Unsupported file format. Please use .moon, .json, .rbchart, .osu, or .sm files.\n";
         return 1;
     }
 

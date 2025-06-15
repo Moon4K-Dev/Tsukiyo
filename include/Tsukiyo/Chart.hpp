@@ -46,7 +46,8 @@ public:
         OsuMania,
         Quaver,
         StepMania,
-        RhythmButtons
+        RhythmButtons,
+        RhythmButtonsCustom
     };
 
     enum class Difficulty {
@@ -85,6 +86,7 @@ inline std::ostream& operator<<(std::ostream& os, const Chart::Format& format) {
         case Chart::Format::Quaver: return os << "Quaver";
         case Chart::Format::StepMania: return os << "StepMania";
         case Chart::Format::RhythmButtons: return os << "Rhythm Buttons";
+        case Chart::Format::RhythmButtonsCustom: return os << "Rhythm Buttons Custom";
         default: return os << "Unknown";
     }
 }

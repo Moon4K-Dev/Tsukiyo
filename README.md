@@ -11,6 +11,7 @@
 | [Osu! Mania](https://osu.ppy.sh/)                                     | osu |
 | [StepMania](https://www.stepmania.com/)                               | sm |
 | [Rhythm Buttons](https://github.com/AD1340/Rhythm-Buttons)                               | json |
+| [Rhythm Buttons (MY CUSTOM CHART FORMAT)](https://github.com/AD1340/Rhythm-Buttons)                               | rbchart |
 
 ## Credits
 
