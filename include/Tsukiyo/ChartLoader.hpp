@@ -5,6 +5,7 @@
 #include "formats/FNFVSliceChart.hpp"
 #include "formats/OsuManiaChart.hpp"
 #include "formats/StepManiaChart.hpp"
+#include "formats/RhythmButtonsChart.hpp"
 #include <filesystem>
 #include <string>
 #include <algorithm>
@@ -35,6 +36,8 @@ inline std::unique_ptr<Chart> Chart::createChart(Format format) {
             return std::make_unique<OsuManiaChart>();
         case Format::StepMania:
             return std::make_unique<StepManiaChart>();
+        case Format::RhythmButtons:
+            return std::make_unique<RhythmButtonsChart>();
         default:
             return nullptr;
     }

@@ -10,6 +10,7 @@
 | [FNF (V-Slice)](https://github.com/FunkinCrew/Funkin)                 | json |
 | [Osu! Mania](https://osu.ppy.sh/)                                     | osu |
 | [StepMania](https://www.stepmania.com/)                               | sm |
+| [Rhythm Buttons](https://github.com/AD1340/Rhythm-Buttons)                               | json |
 
 ## Credits
 

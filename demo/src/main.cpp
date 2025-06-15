@@ -69,6 +69,24 @@ bool isVSliceChart(const std::string& chartPath) {
     }
 }
 
+bool isRhythmButtonsChart(const std::string& chartPath) {
+    try {
+        std::ifstream chartFile(chartPath);
+        if (!chartFile.is_open()) return false;
+        
+        nlohmann::json chartJson = nlohmann::json::parse(chartFile);
+        
+        return chartJson.contains("bpm") && 
+               chartJson.contains("beats") && 
+               chartJson.contains("buttons") &&
+               chartJson["beats"].is_array() &&
+               chartJson["buttons"].is_array();
+    }
+    catch (const std::exception&) {
+        return false;
+    }
+}
+
 int main(int argc, char* argv[])
 {
     if (argc < 2) {
@@ -99,6 +117,8 @@ int main(int argc, char* argv[])
     } else if (ext == ".json") {
         if (isVSliceChart(filePath)) {
             format = Tsukiyo::Chart::Format::FNFVSlice;
+        } else if (isRhythmButtonsChart(filePath)) {
+            format = Tsukiyo::Chart::Format::RhythmButtons;
         } else {
             format = Tsukiyo::Chart::Format::FNFLegacy;
         }
