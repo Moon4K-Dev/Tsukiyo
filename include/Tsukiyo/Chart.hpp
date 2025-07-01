@@ -30,9 +30,10 @@ struct Section {
     float bpm;
     int lengthInSteps;
     bool changeBPM;
+    bool mustHitSection = true;
     
     Section(float _bpm = 120.0f, int steps = 16) 
-        : bpm(_bpm), lengthInSteps(steps), changeBPM(false) {}
+        : bpm(_bpm), lengthInSteps(steps), changeBPM(false), mustHitSection(true) {}
 };
 
 class Moon4KChart;

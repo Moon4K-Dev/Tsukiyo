@@ -151,7 +151,7 @@ private:
                 section.bpm = noteJson.value("bpm", bpm);
                 section.changeBPM = noteJson.value("changeBPM", false);
 
-                bool mustHitSection = noteJson.value("mustHitSection", true);
+                section.mustHitSection = noteJson.value("mustHitSection", true);
                 bool altAnim = noteJson.value("altAnim", false);
 
                 if (noteJson.contains("sectionNotes") && noteJson["sectionNotes"].is_array()) {
@@ -204,7 +204,7 @@ private:
             jsonSection["lengthInSteps"] = section.lengthInSteps;
             jsonSection["bpm"] = section.bpm;
             jsonSection["changeBPM"] = section.changeBPM;
-            jsonSection["mustHitSection"] = true;
+            jsonSection["mustHitSection"] = section.mustHitSection;
             jsonSection["altAnim"] = false;
             
             nlohmann::json sectionNotes = nlohmann::json::array();
