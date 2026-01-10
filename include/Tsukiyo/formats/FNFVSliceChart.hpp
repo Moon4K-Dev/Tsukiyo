@@ -203,6 +203,35 @@ public:
         return playData.difficulties;
     }
 
+    bool selectDifficulty(const std::string& diff) {
+        std::string targetDiff = diff;
+        
+        if (!chartNotes.contains(targetDiff)) {
+            for (const auto& [key, _] : chartNotes) {
+                if (key.find(diff) != std::string::npos || diff.find(key) != std::string::npos) {
+                    targetDiff = key;
+                    break;
+                }
+            }
+        }
+        
+        if (!chartNotes.contains(targetDiff)) {
+            return false;
+        }
+        
+        if (scrollSpeeds.contains(targetDiff)) {
+            speed = scrollSpeeds[targetDiff];
+        }
+        
+        float baseBpm = bpm;
+        if (!timeChanges.empty()) {
+            baseBpm = timeChanges[0].bpm;
+        }
+        
+        createSectionsFromNotes(chartNotes[targetDiff], baseBpm);
+        return true;
+    }
+
     bool loadFromFile(const std::string& path) override {
         try {
             std::filesystem::path chartPath(path);
